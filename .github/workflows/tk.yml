@@ -13,28 +13,74 @@ jobs:
       - name: Checkout Repository  
         uses: actions/checkout@v4  
   
-      - name: Set up Python  
+      # 设置64位Python环境（默认）  
+      - name: Set up 64-bit Python  
         uses: actions/setup-python@v5  
         with:  
           python-version: '3.12'  
+          architecture: 'x64' # 默认是64位，但明确指定以防万一  
   
-      - name: Install Dependencies  
+      - name: Install Dependencies for 64-bit  
         run: |  
           python -m pip install --upgrade pip  
-          pip install xlwt  # 安装xlwt模块  
-          pip install pyinstaller  # 确保pyinstaller已安装  
+          pip install xlwt  
+          pip install pyinstaller  
   
-      - name: Create Executable  
+      - name: Create 64-bit Executable  
         uses: sayyid5416/pyinstaller@v1  
         with:  
           python_ver: '3.12'  
-          spec: 'tk.py'  # 假设您的主脚本是tk.py  
-          upload_exe_with_name: 'tk'  
-          options: --onefile --name "txt_to_excel" --windowed  # 注意：选项之间用空格分隔，不要使用逗号  
+          spec: 'tk.py'  
+          upload_exe_with_name: 'tk_64bit'  
+          options: --onefile --name "txt_to_excel_64bit" --windowed  
   
-      # 如果您希望将生成的exe文件作为工件上传，可以添加以下步骤  
-      - name: Upload Executable as Artifact  
+      # 设置32位Python环境  
+      # 注意：Windows上通常不默认安装32位Python，因此可能需要指定完整路径或使用特定方法来安装  
+      # 这里假设您已经在系统上安装了32位Python，并且它的可执行文件在PATH中  
+      - name: Set up 32-bit Python (Assuming it's already installed)  
+        # 如果32位Python不在PATH中，您可能需要使用完整路径来调用它  
+        # 例如：uses: actions/setup-python@v5 with python-executable: 'C:\Path\To\32bit\python.exe'  
+        run: echo "Skipping actual setup of 32-bit Python; assuming it's already available in PATH or will be handled differently."  
+  
+      # 由于我们假设32位Python已经在PATH中，我们可以直接使用'python'命令，  
+      # 但为了确保使用的是32位版本，您可能需要指定完整路径。  
+      - name: Install Dependencies for 32-bit (Using 32-bit Python)  
+        # 如果32位Python的可执行文件名称不是'python'，则需要替换下面的'python'命令。  
+        run: |  
+          python -m pip install --upgrade pip  
+          pip install xlwt  
+          pip install pyinstaller  
+        # 如果您需要指定32位Python的路径，请像这样调用它（替换为实际的路径）：  
+        # 'C:\Path\To\32bit\python.exe' -m pip install --upgrade pip  
+        # 'C:\Path\To\32bit\python.exe' -m pip install xlwt  
+        # 'C:\Path\To\32bit\python.exe' -m pip install pyinstaller  
+  
+      - name: Create 32-bit Executable  
+        # 同样，如果32位PyInstaller的路径不同，请指定完整路径。  
+        uses: sayyid5416/pyinstaller@v1  
+        with:  
+          # 如果32位Python不在PATH中，或者您想要明确指定，请使用python_executable字段。  
+          # python_executable: 'C:\Path\To\32bit\python.exe'  
+          python_ver: '3.12' # 这里假设32位Python也是3.12版本  
+          spec: 'tk.py'  
+          upload_exe_with_name: 'tk_32bit'  
+          options: --onefile --name "txt_to_excel_32bit" --windowed  
+  
+      # 上传64位和32位可执行文件作为工件  
+      - name: Upload 64-bit Executable as Artifact  
         uses: actions/upload-artifact@v4  
         with:  
-          name: txt_to_excel_executable  
-          path: dist/txt_to_excel.exe  # 假设exe文件生成在dist目录下，且文件名为txt_to_excel.exe
+          name: txt_to_excel_64bit_executable  
+          path: dist/txt_to_excel_64bit.exe  
+  
+      - name: Upload 32-bit Executable as Artifact  
+        uses: actions/upload-artifact@v4  
+        with:  
+          name: txt_to_excel_32bit_executable  
+          path: dist/txt_to_excel_32bit.exe  
+  
+# 注意：  
+# 1. 如果您的系统上没有预安装32位Python，您可能需要下载并安装它，或者使用像Chocolatey这样的包管理器来安装。  
+# 2. 在安装依赖项和创建可执行文件时，请确保使用的是正确架构的Python解释器。  
+# 3. 如果32位和64位Python解释器的路径不同，您需要在相应的步骤中指定完整路径。  
+# 4. 由于我们在这里假设了32位Python已经在PATH中，如果实际情况不是这样，请相应地修改脚本。
